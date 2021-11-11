@@ -5,16 +5,16 @@ install_dep:
 	pip install -r requirements.txt
 
 start_board:
-	mkdir -p results/runs && tensorboard --logdir=results/runs&
+	mkdir -p experiments/runs && tensorboard --logdir=experiments/runs&
 
 stop_board:
 	sudo pkill tensorboard
 
 train:
-	mkdir -p results && python src/train.py
+	mkdir -p experiments && python src/app/train.py
 
 play:
-	python src/play.py
+	python src/app/play.py
 
 decay_test:
 	mkdir -p decay_test && python src/decay_test.py
