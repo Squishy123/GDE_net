@@ -18,3 +18,9 @@ play:
 
 decay_test:
 	mkdir -p decay_test && python src/decay_test.py
+
+download_datasets:
+	wget https://www.cs.toronto.edu/~nitish/unsupervised_video/mnist_test_seq.npy downloads/
+
+setup: 
+	mkdir -p results/movingMNIST/dae_pretraining && mkdir -p weights/movingMNIST/dae_pretraining && mkdir -p results/movingMNIST/dae_denoising && mkdir -p weights/movingMNIST/dae_denoising 
