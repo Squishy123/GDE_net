@@ -113,6 +113,7 @@ for e in range(TOTAL_EPOCHS):
 
     print(f"EPOCH LOSS: {epoch_loss}")
 '''
+'''
 dae = State_Autoencoder(1, 1).cuda().to(device)
 optim = torch.optim.Adam(dae.parameters(), lr=1e-3)
 
@@ -123,8 +124,8 @@ SAVE_INTERVAL = 100000
 
 # LOAD IN
 #print(weights_path)
-#dae.load_state_dict(torch.load((str(weights_path) + f'/dae_pretraining/dae_{9}_{100000}.pth')))
-#dae.eval()
+dae.load_state_dict(torch.load((str(weights_path) + f'/dae_denoising/dae_{499}_{100000}.pth')))
+dae.eval()
 
 # DENOISING
 fig1, (ax1) = plt.subplots(1, constrained_layout=True)
@@ -132,7 +133,8 @@ ax1.set_title('DAE NOISY-TRAINING - LOSS OVER EPISODES')
 ax1.set_xlabel('Episodes')
 ax1.set_ylabel('Loss')
 
-for e in range(TOTAL_EPOCHS):
+#for e in range(TOTAL_EPOCHS):
+for e in range(500, 700):
     epoch_loss = 0
     ep = 0
     print(f"TRAINING EPOCH: {e}")
@@ -186,3 +188,50 @@ for e in range(TOTAL_EPOCHS):
         ep += BATCH_SIZE
 
     print(f"EPOCH LOSS: {epoch_loss}")
+'''
+dae = State_Autoencoder(1, 1).cuda().to(device)
+optim = torch.optim.Adam(dae.parameters(), lr=1e-3)
+
+BATCH_SIZE = 1000
+TOTAL_EPOCHS = 500
+PLT_INTERVAL = 50000
+SAVE_INTERVAL = 100000
+
+# LOAD IN
+#print(weights_path)
+dae.load_state_dict(torch.load((str(weights_path) + f'/dae_denoising/dae_{699}_{100000}.pth')))
+dae.eval()
+
+encoded_dataset = None
+
+for i in range((10)):
+    if i % 1000 == 0:
+        print(i)
+
+    with torch.no_grad():
+        #print(movingMNIST[i].shape)
+        #print(f"TRAINING EXAMPLES: {i*BATCH_SIZE}-{(i+1)*BATCH_SIZE}")
+        state = reg_transform(movingMNIST[i]).to(device).float().unsqueeze(0).permute(2,0,1,3)
+        #print(state.shape)
+        computed_state = dae.encoder(state).unsqueeze(0).cpu()
+        #print(computed_state.shape)
+        #computed_state = dae.bottleneck(computed_state).unsqueeze(0).cpu()
+
+        if encoded_dataset == None:
+            encoded_dataset = computed_state
+        else:
+            encoded_dataset = torch.cat((encoded_dataset, computed_state), 0)
+
+        print(encoded_dataset.shape)
+
+fig2, (a, b, c) = plt.subplots(1, 3)
+with torch.no_grad():
+    #print(encoded_dataset[5].shape)
+    test_state = dae.decoder(encoded_dataset[6].to(device)).cpu().numpy()
+    #print(test_state.shape)
+    a.imshow(test_state[0].squeeze(0))
+    b.imshow(test_state[5].squeeze(0))
+    c.imshow(test_state[10].squeeze(0))
+    plt.show()
+
+#np.save((Path(__file__).parent / '../datasets/mnist_encoded_seq.npy').resolve(), encoded_dataset.numpy())

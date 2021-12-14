@@ -38,7 +38,5 @@ class State_Autoencoder(nn.Module):
     # forward pass
     def forward(self, x):
         x = self.encoder(x)
-        x1 = self.bottleneck(x)
-        #print(x1.shape)
         x1 = self.decoder(x)
         return x1
