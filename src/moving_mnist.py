@@ -47,6 +47,7 @@ noisy_transform = transforms.Compose([
     AddGaussianNoise(0., 1.)
 ])
 
+'''
 dae = State_Autoencoder(1, 1).cuda().to(device)
 optim = torch.optim.Adam(dae.parameters(), lr=1e-3)
 
@@ -71,6 +72,8 @@ for e in range(TOTAL_EPOCHS):
         #print(f"TRAINING EXAMPLES: {i*BATCH_SIZE}-{(i+1)*BATCH_SIZE}")
         state = reg_transform(flattened_data[(i*BATCH_SIZE):(i+1)*BATCH_SIZE]).to(device).float().unsqueeze(0).permute(2,0,1,3)
 
+        optim.zero_grad()
+
         computed_state = dae(state)
         predicted_loss = torch.nn.functional.mse_loss(computed_state, state)
 
@@ -81,7 +84,6 @@ for e in range(TOTAL_EPOCHS):
                 param.grad.data.clamp_(-1, 1)
 
         optim.step()
-        optim.zero_grad()
 
         if ep % PLT_INTERVAL == 0:
             print(f"LOSS: {predicted_loss.item()}")
@@ -105,11 +107,12 @@ for e in range(TOTAL_EPOCHS):
                 b.imshow(dae(state).squeeze(0).squeeze(0).squeeze(0).cpu().numpy())
                 b.set_title("DAE Prediction")
                 fig2.savefig((str(results_path) + f'/dae_pretraining/dae_reconstruction_{e}_{ep}.png'))
+                plt.close(fig2)
 
         ep += BATCH_SIZE
 
     print(f"EPOCH LOSS: {epoch_loss}")
-
+'''
 dae = State_Autoencoder(1, 1).cuda().to(device)
 optim = torch.optim.Adam(dae.parameters(), lr=1e-3)
 
@@ -119,9 +122,9 @@ PLT_INTERVAL = 50000
 SAVE_INTERVAL = 100000
 
 # LOAD IN
-print(weights_path)
-dae.load_state_dict(torch.load((str(weights_path) + f'/dae_pretraining/dae_{9}_{20000}.pth')))
-dae.eval()
+#print(weights_path)
+#dae.load_state_dict(torch.load((str(weights_path) + f'/dae_pretraining/dae_{9}_{100000}.pth')))
+#dae.eval()
 
 # DENOISING
 fig1, (ax1) = plt.subplots(1, constrained_layout=True)
@@ -138,6 +141,8 @@ for e in range(TOTAL_EPOCHS):
         state = reg_transform(flattened_data[(i*BATCH_SIZE):(i+1)*BATCH_SIZE]).to(device).float().unsqueeze(0).permute(2,0,1,3)
         noise_state = state = noisy_transform(flattened_data[(i*BATCH_SIZE):(i+1)*BATCH_SIZE]).to(device).float().unsqueeze(0).permute(2,0,1,3)
 
+        optim.zero_grad()
+
         computed_state = dae(noise_state)
         predicted_loss = torch.nn.functional.mse_loss(computed_state, state)
 
@@ -148,7 +153,6 @@ for e in range(TOTAL_EPOCHS):
                 param.grad.data.clamp_(-1, 1)
 
         optim.step()
-        optim.zero_grad()
 
         if ep % PLT_INTERVAL == 0:
             print(f"LOSS: {predicted_loss.item()}")
@@ -177,6 +181,7 @@ for e in range(TOTAL_EPOCHS):
                 c.set_title("DAE Prediction")
 
                 fig2.savefig((str(results_path) + f'/dae_denoising/dae_reconstruction_{e}_{ep}.png'))
+                plt.close(fig2)
 
         ep += BATCH_SIZE
 

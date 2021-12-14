@@ -18,14 +18,13 @@ class State_Autoencoder(nn.Module):
             ('encoder_conv2',  nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1)),
             ('encoder_relu2', nn.ReLU()),
             ('encoder_conv3', nn.Conv2d(32, 64, kernel_size=7)),
-            ('encoder_relu3', nn.LeakyReLU()),
+            ('encoder_relu3', nn.ReLU()),
         ]))
-
+        
         self.bottleneck = nn.Sequential(OrderedDict([
             ('bottleneck_conv1', nn.Conv2d(64, 64, kernel_size=(1, 1))),
             ('bottleneck_relu1', nn.ReLU()),
         ]))
-
 
         self.decoder = nn.Sequential(OrderedDict([
             ('decoder_Tconv1', nn.ConvTranspose2d(64, 32, kernel_size=7)),
@@ -33,12 +32,12 @@ class State_Autoencoder(nn.Module):
             ('decoder_Tconv2', nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, output_padding=1)),
             ('decoder_relu2', nn.ReLU()),
             ('decoder_Tconv3', nn.ConvTranspose2d(16, channels * frame_stacks, kernel_size=3, stride=2, padding=1, output_padding=1)),
-            ('decoder_relu3', nn.LeakyReLU()),
+            ('decoder_relu3', nn.ReLU()),
         ]))
 
     # forward pass
     def forward(self, x):
         x = self.encoder(x)
         x1 = self.bottleneck(x)
-        x1 = self.decoder(x1)
+        x1 = self.decoder(x)
         return x1
