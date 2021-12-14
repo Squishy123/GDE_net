@@ -9,7 +9,6 @@ import torch
 import numpy as np
 
 dae = State_Autoencoder(1, 1).cuda().to(DEVICE)
-optim = torch.optim.Adam(dae.parameters(), lr=1e-3)
 
 # HYPER-PARAMETERS
 BATCH_SIZE = 1000
@@ -24,7 +23,7 @@ dae.eval()
 print(MOVING_MNIST_DATASET_ENCODED["encoded"].shape)
 print(MOVING_MNIST_DATASET_ENCODED["original"].shape)
 
-
+'''
 fig2, (a, b, c) = plt.subplots(1, 3)
 with torch.no_grad():
     #print(MOVING_MNIST_DATASET_ENCODED[5].shape)
@@ -34,13 +33,16 @@ with torch.no_grad():
     a.imshow(ind)
     b.imshow(MOVING_MNIST_DATASET_ENCODED["original"][0][0])
     c.imshow(test_state[0].squeeze(0))
-    plt.show()
 
 exit()
+'''
+
+sae = Sequential_Autoencoder().to(DEVICE)
+optim = torch.optim.Adam(dae.parameters(), lr=1e-3)
 
 # DENOISING
 fig1, (ax1) = plt.subplots(1, constrained_layout=True)
-ax1.set_title('DAE NOISY-TRAINING - LOSS OVER EPISODES')
+ax1.set_title('SAE TRAINING - LOSS OVER EPISODES')
 ax1.set_xlabel('Episodes')
 ax1.set_ylabel('Loss')
 
@@ -48,13 +50,17 @@ for e in range(TOTAL_EPOCHS):
     epoch_loss = 0
     ep = 0
     print(f"TRAINING EPOCH: {e}")
-    for i in range((len(MOVING_MNIST_DATASET_FLAT)//BATCH_SIZE)):
-        state = reg_transform(MOVING_MNIST_DATASET_FLAT[(i*BATCH_SIZE):(i+1)*BATCH_SIZE]).to(DEVICE).float().unsqueeze(0).permute(2,0,1,3)
-        noise_state = state = noisy_transform(MOVING_MNIST_DATASET_FLAT[(i*BATCH_SIZE):(i+1)*BATCH_SIZE]).to(DEVICE).float().unsqueeze(0).permute(2,0,1,3)
+    for i in range((len(MOVING_MNIST_DATASET_ENCODED["encoded"])//BATCH_SIZE)):
+        state = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][(i*BATCH_SIZE):(i+1)*BATCH_SIZE]).to(DEVICE)
+        state = torch.flatten(state, 2).unsqueeze(3)
+
+        print(state.shape)
 
         optim.zero_grad()
 
-        computed_state = dae(noise_state)
+        computed_state = sae(state)
+        print(computed_state.shape)
+
         predicted_loss = torch.nn.functional.mse_loss(computed_state, state)
 
         predicted_loss.backward()
@@ -67,31 +73,26 @@ for e in range(TOTAL_EPOCHS):
 
         if ep % PLT_INTERVAL == 0:
             print(f"LOSS: {predicted_loss.item()}")
-            ax1.scatter((e*len(MOVING_MNIST_DATASET_FLAT))+ep, predicted_loss.item(), color="blue")
-            fig1.savefig((str(RESULTS_PATH) + '/dae_denoising/dae_loss.png'))
+            ax1.scatter((e*len(MOVING_MNIST_DATASET_ENCODED["encoded"]))+ep, predicted_loss.item(), color="blue")
+            fig1.savefig((str(RESULTS_PATH) + '/sae_training/sae_loss.png'))
 
         epoch_loss += predicted_loss.item()
     
         if ep % SAVE_INTERVAL == 0:
-            torch.save(dae.state_dict(), (str(WEIGHTS_PATH) + f'/dae_denoising/dae_{e}_{ep}.pth'))
+            torch.save(dae.state_dict(), (str(WEIGHTS_PATH) + f'/sae_training/sae_{e}_{ep}.pth'))
 
             with torch.no_grad():
                 idx = np.random.randint(0, 100)
 
-                fig2, (a, b, c) = plt.subplots(1, 3)
-                state = MOVING_MNIST_DATASET_FLAT[idx]
-                noise_state = noisy_transform(MOVING_MNIST_DATASET_FLAT[idx]).to(DEVICE).float().unsqueeze(0)
+                fig2, (a, b) = plt.subplots(1, 2)
+                a.imshow(MOVING_MNIST_DATASET_ENCODED["original"][idx].squeeze(0))
+                a.set_title("Actual Image")
 
-                a.imshow(state)
-                a.set_title("Original Image")
 
-                b.imshow(noise_state.squeeze(0).squeeze(0).cpu().numpy())
-                b.set_title("Noisy Image")
-
-                c.imshow(dae(noise_state).squeeze(0).squeeze(0).squeeze(0).cpu().numpy())
-                c.set_title("DAE Prediction")
-
-                fig2.savefig((str(RESULTS_PATH) + f'/dae_denoising/dae_reconstruction_{e}_{ep}.png'))
+                state = reg_transform(MOVING_MNIST_DATASET_ENCODED["encoded"][idx]).to(DEVICE).float().unsqueeze(0)
+                b.imshow(dae(state).squeeze(0).squeeze(0).squeeze(0).cpu().numpy())
+                b.set_title("SAE Prediction")
+                fig2.savefig((str(RESULTS_PATH) + f'/sae_training/sae_reconstruction_{e}_{ep}.png'))
                 plt.close(fig2)
 
         ep += BATCH_SIZE

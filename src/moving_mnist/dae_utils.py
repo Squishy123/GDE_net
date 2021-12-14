@@ -29,12 +29,13 @@ DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 # https://discuss.pytorch.org/t/how-to-add-noise-to-mnist-dataset-when-using-pytorch/59745
 # https://ai.plainenglish.io/denoising-autoencoder-in-pytorch-on-mnist-dataset-a76b8824e57e
 class AddGaussianNoise(object):
-    def __init__(self, mean=0., std=1.):
+    def __init__(self, mean=0., std=1., noise_factor=0.4):
         self.std = std
         self.mean = mean
+        self.noise_factor = noise_factor
         
     def __call__(self, tensor):
-        noisy = tensor + torch.randn(tensor.size()) * self.std + self.mean
+        noisy = tensor + self.noise_factor*torch.randn(tensor.size()) * self.std + self.mean
         noisy = torch.clip(noisy, 0., 1.)
         return noisy
     

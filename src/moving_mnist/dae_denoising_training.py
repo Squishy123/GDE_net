@@ -17,8 +17,8 @@ PLT_INTERVAL = 50000
 SAVE_INTERVAL = 100000
 
 # LOAD IN
-dae.load_state_dict(torch.load((str(WEIGHTS_PATH) + f'/dae_denoising/dae_{799}_{100000}.pth')))
-dae.eval()
+#dae.load_state_dict(torch.load((str(WEIGHTS_PATH) + f'/dae_denoising/dae_{799}_{100000}.pth')))
+#dae.eval()
 
 # DENOISING
 fig1, (ax1) = plt.subplots(1, constrained_layout=True)

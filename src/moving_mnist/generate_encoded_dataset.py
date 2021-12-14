@@ -23,13 +23,12 @@ encoded_dataset = None
 original_dataset = None
 
 #for i in range((MOVING_MNIST_DATASET.shape[0])):
-for i in range((10)):
+for i in range(1000):
     if i % 1000 == 0:
         print(i)
 
     with torch.no_grad():
         state = reg_transform(MOVING_MNIST_DATASET[i]).to(DEVICE).float().unsqueeze(0).permute(2,0,3,1)
-        print(state.shape)
         computed_state = dae.encoder(state).unsqueeze(0).cpu()
 
         if encoded_dataset == None:
