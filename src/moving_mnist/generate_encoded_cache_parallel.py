@@ -18,7 +18,7 @@ def main(argv):
     PLT_INTERVAL = 50000
     SAVE_INTERVAL = 100000
     NUM_FRAMES = 5
-    OUTPUT_FILE="/mnist_preloaded_encoded.npz"
+    OUTPUT_FILE="mnist_preloaded_encoded.npz"
 
     try:
         opts, args = getopt.getopt(argv,"hf:o:",["numframes=","ofile="])
@@ -40,23 +40,46 @@ def main(argv):
     #dae.load_state_dict(torch.load((str(WEIGHTS_PATH) + f'/dae_training/dae_{115}_{0}.pth')))
     #dae.eval()
     data = np.load(str(DATASETS_PATH) + "/mnist_encoded_seq.npz")
-    encoded_dataset = torch.tensor(data["encoded"]).cpu()[:1000]
-    original_dataset = torch.tensor(data["original"]).cpu()
+
+    encoded_dataset = torch.tensor(data["encoded"]).cpu()
+    #original_dataset = torch.tensor(data["original"]).cpu()
 
     # PRECACHE CURR AND NEXT STATES FOR SAE
-    preloaded_curr_state = None
-    preloaded_next_state = None
+    preloaded_curr_state_ALL = None
+    preloaded_next_state_ALL = None
 
-    preloaded_curr_state=encoded_dataset[:,:-1]
-    preloaded_curr_state = preloaded_curr_state.unfold(1, NUM_FRAMES, 1)
-    preloaded_curr_state=torch.reshape(preloaded_curr_state, (preloaded_curr_state.shape[0], preloaded_curr_state.shape[1], NUM_FRAMES*64, 10, 10))
+    for i in range(len(encoded_dataset)//BATCH_SIZE):
+        print(f"{i}/{len(encoded_dataset)//BATCH_SIZE}")
 
-    preloaded_next_state=encoded_dataset[:,1:]
-    preloaded_next_state = preloaded_next_state.unfold(1, NUM_FRAMES, 1)
-    preloaded_next_state=torch.reshape(preloaded_next_state, (preloaded_next_state.shape[0], preloaded_next_state.shape[1], NUM_FRAMES*64, 10, 10))
+        data = encoded_dataset[i*BATCH_SIZE:(i+1)*BATCH_SIZE]
 
-    # SAVING PRELOADED DATA
-    np.savez(str(DATASETS_PATH) + OUTPUT_FILE, curr_state=preloaded_curr_state, next_state=preloaded_next_state)
+        preloaded_curr_state=data[:,:-1]
+        preloaded_curr_state = preloaded_curr_state.unfold(1, NUM_FRAMES, 1)
+        preloaded_curr_state=torch.reshape(preloaded_curr_state, (preloaded_curr_state.shape[0], preloaded_curr_state.shape[1], NUM_FRAMES*64, 10, 10))
+
+        preloaded_next_state=data[:,1:]
+        preloaded_next_state = preloaded_next_state.unfold(1, NUM_FRAMES, 1)
+        preloaded_next_state=torch.reshape(preloaded_next_state, (preloaded_next_state.shape[0], preloaded_next_state.shape[1], NUM_FRAMES*64, 10, 10))
+
+        '''
+        if preloaded_curr_state_ALL == None:
+            preloaded_curr_state_ALL = preloaded_curr_state
+        else:
+            preloaded_curr_state_ALL = torch.cat((preloaded_curr_state_ALL, preloaded_curr_state), 0)
+
+        if preloaded_next_state_ALL == None:
+            preloaded_next_state_ALL = preloaded_next_state
+        else:
+            preloaded_next_state_ALL = torch.cat((preloaded_next_state_ALL, preloaded_next_state), 0)
+        '''
+        #del preloaded_next_state
+        #del preloaded_curr_state
+        #del data
+
+        #print(preloaded_curr_state_ALL.shape)
+
+        # SAVING PRELOADED DATA
+        np.savez(str(DATASETS_PATH) + "/" + f"CACHE_{i}_" + OUTPUT_FILE, curr_state=preloaded_curr_state, next_state=preloaded_next_state)
 
 
 if __name__ == "__main__":
