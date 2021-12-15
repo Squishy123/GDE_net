@@ -9,11 +9,11 @@ import torch
 import numpy as np
 
 # HYPER-PARAMETERS
-BATCH_SIZE = 1
-TOTAL_EPOCHS = 500
-PLT_INTERVAL = 10
-SAVE_INTERVAL = 10
-NUM_FRAMES = 1
+BATCH_SIZE = 100
+TOTAL_EPOCHS = 10
+PLT_INTERVAL = 1000
+SAVE_INTERVAL = 1000
+NUM_FRAMES = 2
 
 dae = State_Autoencoder(1, 1).cuda().to(DEVICE)
 
@@ -39,7 +39,6 @@ with torch.no_grad():
 exit()
 '''
 
-
 sae = Sequential_Autoencoder(NUM_FRAMES).to(DEVICE)
 optim = torch.optim.Adam(sae.parameters(), lr=1e-3)
 
@@ -49,44 +48,11 @@ ax1.set_title('SAE TRAINING - LOSS OVER EPISODES')
 ax1.set_xlabel('Episodes')
 ax1.set_ylabel('Loss')
 
-preloaded_curr_state = None
-preloaded_next_state = None
-
-#for i in range(len(MOVING_MNIST_DATASET_ENCODED["encoded"])):
-for i in range(5):
-    #print(MOVING_MNIST_DATASET_ENCODED["encoded"].shape)
-    g = 0 
-    ep_loss = 0
-    while g < MOVING_MNIST_DATASET_ENCODED["encoded"].shape[1]-1:
-            
-        #exit()
-
-        #state = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][(i*BATCH_SIZE):(i+1)*BATCH_SIZE]).to(DEVICE)
-        #state = torch.flatten(state, 2).unsqueeze(3)
-        current_state = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][i][g:g+NUM_FRAMES])
-        next_state = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][i][g+1:g+NUM_FRAMES+1])
-        
-        if preloaded_curr_state == None:
-            preloaded_curr_state = current_state.cpu()
-        else:
-            preloaded_curr_state = torch.cat((preloaded_curr_state.cpu(), current_state.cpu()), 0)
-
-        if preloaded_next_state == None:
-            preloaded_next_state = next_state.cpu()
-        else:
-            preloaded_next_state = torch.cat((preloaded_next_state.cpu(), next_state.cpu()), 0)
-
-        g += NUM_FRAMES
-
-    print(preloaded_curr_state.shape)
-
-# SAVING PRELOADED DATA
-np.savez(str(DATASETS_PATH) + "mnist_preloaded_encoded.npy", curr_state=preloaded_curr_state, next_state=preloaded_next_state)
-
 # LOADING PRELOADED DATA
-#data = np.load(str(DATASETS_PATH) + "mnist_preloaded_encoded.npy")
-#preloaded_curr_state = data["curr_state"]
-#preloaded_next_state = data["next_state"]
+data = np.load(str(DATASETS_PATH) + "/mnist_preloaded_encoded.npz")
+preloaded_curr_state = torch.tensor(data["curr_state"])
+preloaded_next_state = torch.tensor(data["next_state"])
+
 
 for e in range(TOTAL_EPOCHS):
     epoch_loss = 0
@@ -100,7 +66,6 @@ for e in range(TOTAL_EPOCHS):
         optim.zero_grad()
 
         computed_state = sae(current_state)
-        #print(computed_state.shape)
 
         predicted_loss = torch.nn.functional.mse_loss(computed_state, next_state)
 
@@ -134,13 +99,21 @@ for e in range(TOTAL_EPOCHS):
                 b.imshow(MOVING_MNIST_DATASET_ENCODED["original"][ix][idx+1])
                 b.set_title("Actual Next State")
 
-                current_state = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][ix][idx:idx+NUM_FRAMES]).to(DEVICE)
-                next_state = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][ix][idx+1:idx+NUM_FRAMES+1]).to(DEVICE)
+                #current_state = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][ix][idx:idx+NUM_FRAMES]).to(DEVICE)
+                #next_state = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][ix][idx+1:idx+NUM_FRAMES+1]).to(DEVICE)
+                c_s = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][ix][idx:idx+NUM_FRAMES])
+                n_s = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][ix][idx+1:idx+NUM_FRAMES+1])
+                current_state = torch.reshape(c_s, (1, c_s.shape[1] * c_s.shape[0], c_s.shape[2], c_s.shape[3])).to(DEVICE)
+                next_state = torch.reshape(n_s, (1, n_s.shape[1] * n_s.shape[0], n_s.shape[2], n_s.shape[3])).to(DEVICE)
+            
                 n_out = sae(current_state)
-                n_out = dae.decoder(n_out).cpu().squeeze(0).numpy()
 
-                if len(n_out):
-                    n_out = n_out[-1]
+
+                if NUM_FRAMES > 1:
+                    f = (n_out.shape[1]+1)//NUM_FRAMES
+                    n_out = n_out[0][n_out.shape[1]-f:n_out.shape[1]].unsqueeze(0)
+
+                n_out = dae.decoder(n_out).cpu().squeeze(0).squeeze(0).numpy()
 
                 c.imshow(n_out)
                 c.set_title("Predicted Next State")
