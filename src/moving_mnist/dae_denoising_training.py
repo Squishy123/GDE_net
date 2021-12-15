@@ -12,7 +12,7 @@ optim = torch.optim.Adam(dae.parameters(), lr=1e-3)
 
 # HYPER-PARAMETERS
 BATCH_SIZE = 1000
-TOTAL_EPOCHS = 500
+TOTAL_EPOCHS = 10
 PLT_INTERVAL = 50000
 SAVE_INTERVAL = 100000
 

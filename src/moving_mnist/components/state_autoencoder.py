@@ -9,7 +9,7 @@ State_Autoencoder Class
 
 class State_Autoencoder(nn.Module):
     # accepts input for number of transforms
-    def __init__(self, frame_stacks=1, channels=3):
+    def __init__(self, frame_stacks=1, channels=1):
         super(State_Autoencoder, self).__init__()
 
         self.encoder = nn.Sequential(OrderedDict([

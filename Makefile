@@ -23,4 +23,4 @@ download_datasets:
 	wget https://www.cs.toronto.edu/~nitish/unsupervised_video/mnist_test_seq.npy downloads/
 
 setup: 
-	mkdir -p results/movingMNIST/dae_pretraining && mkdir -p weights/movingMNIST/dae_pretraining && mkdir -p results/movingMNIST/dae_denoising && mkdir -p weights/movingMNIST/dae_denoising 
+	mkdir -p results/movingMNIST/dae_training && mkdir -p weights/movingMNIST/dae_training && mkdir -p results/movingMNIST/dae_denoising && mkdir -p weights/movingMNIST/dae_denoising && mkdir -p results/movingMNIST/sae_training && mkdir -p weights/movingMNIST/sae_training

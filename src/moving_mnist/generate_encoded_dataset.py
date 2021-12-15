@@ -16,7 +16,7 @@ SAVE_INTERVAL = 100000
 
 # LOAD IN
 #print(WEIGHTS_PATH)
-dae.load_state_dict(torch.load((str(WEIGHTS_PATH) + f'/dae_denoising/dae_{699}_{100000}.pth')))
+dae.load_state_dict(torch.load((str(WEIGHTS_PATH) + f'/dae_training/dae_{17}_{0}.pth')))
 dae.eval()
 
 encoded_dataset = None
