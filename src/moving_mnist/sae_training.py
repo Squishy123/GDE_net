@@ -10,10 +10,10 @@ import numpy as np
 
 # HYPER-PARAMETERS
 BATCH_SIZE = 100
-TOTAL_EPOCHS = 3
+TOTAL_EPOCHS = 5
 PLT_INTERVAL = 1000
 SAVE_INTERVAL = 1000
-NUM_FRAMES = 1
+NUM_FRAMES = 19
 
 dae = State_Autoencoder(1, 1).cuda().to(DEVICE)
 
@@ -49,10 +49,9 @@ ax1.set_xlabel('Episodes')
 ax1.set_ylabel('Loss')
 
 # LOADING PRELOADED DATA
-data = np.load(str(DATASETS_PATH) + "/mnist_preloaded_encoded_1.npz")
+data = np.load(str(DATASETS_PATH) + "/mnist_preloaded_encoded_19.npz")
 preloaded_curr_state = torch.tensor(data["curr_state"])
 preloaded_next_state = torch.tensor(data["next_state"])
-
 
 for e in range(TOTAL_EPOCHS):
     epoch_loss = 0
@@ -90,7 +89,7 @@ for e in range(TOTAL_EPOCHS):
 
             with torch.no_grad():
                 ix = np.random.randint(0, len(MOVING_MNIST_DATASET_ENCODED["original"]))
-                idx = np.random.randint(0, 19)
+                idx = np.random.randint(0, max(1, 19-NUM_FRAMES))
 
                 fig2, (a, b, c) = plt.subplots(1, 3)
                 a.imshow(MOVING_MNIST_DATASET_ENCODED["original"][ix][idx])
@@ -103,7 +102,9 @@ for e in range(TOTAL_EPOCHS):
                 #next_state = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][ix][idx+1:idx+NUM_FRAMES+1]).to(DEVICE)
                 c_s = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][ix][idx:idx+NUM_FRAMES])
                 n_s = torch.tensor(MOVING_MNIST_DATASET_ENCODED["encoded"][ix][idx+1:idx+NUM_FRAMES+1])
+                #print(c_s.shape)
                 current_state = torch.reshape(c_s, (1, c_s.shape[1] * c_s.shape[0], c_s.shape[2], c_s.shape[3])).to(DEVICE)
+                #print(current_state.shape)
                 next_state = torch.reshape(n_s, (1, n_s.shape[1] * n_s.shape[0], n_s.shape[2], n_s.shape[3])).to(DEVICE)
             
                 n_out = sae(current_state)
