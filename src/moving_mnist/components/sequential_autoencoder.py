@@ -17,13 +17,9 @@ class Sequential_Autoencoder(nn.Module):
             ('encoder_relu1', nn.ReLU()),
             ('encoder_conv2',  nn.Conv2d(16, 32, kernel_size=3, stride=2, padding=1)),
             ('encoder_relu2', nn.ReLU()),
-            ('encoder_conv3', nn.Conv2d(32, 32, kernel_size=1)),
-            ('encoder_relu3', nn.ReLU()),
         ]))
 
         self.decoder = nn.Sequential(OrderedDict([
-            ('decoder_Tconv1', nn.ConvTranspose2d(32, 32, kernel_size=1)),
-            ('decoder_relu1', nn.ReLU()),
             ('decoder_Tconv2', nn.ConvTranspose2d(32, 16, kernel_size=3, stride=2, padding=1, output_padding=0)),
             ('decoder_relu2', nn.ReLU()),
             ('decoder_Tconv3', nn.ConvTranspose2d(16, num_frames * channels, kernel_size=3, stride=2, padding=1, output_padding=1)),

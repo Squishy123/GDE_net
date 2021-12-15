@@ -9,13 +9,13 @@ import torch
 import numpy as np
 
 # HYPER-PARAMETERS
-BATCH_SIZE = 1000
+BATCH_SIZE = 5000
 CACHE_BATCH_SIZE = 1000
 CACHE_BATCH_LENGTH = 10
 TOTAL_EPOCHS = 500
-PLT_INTERVAL = 1000
-SAVE_INTERVAL = 1000
-NUM_FRAMES = 5
+PLT_INTERVAL = 25000
+SAVE_INTERVAL = 50000
+NUM_FRAMES = 1
 
 dae = State_Autoencoder(1, 1).cuda().to(DEVICE)
 
@@ -67,6 +67,8 @@ for e in range(TOTAL_EPOCHS):
         preloaded_curr_state = torch.reshape(preloaded_curr_state, (preloaded_curr_state.shape[0]*preloaded_curr_state.shape[1], preloaded_curr_state.shape[2], preloaded_curr_state.shape[3], preloaded_curr_state.shape[4]))
         preloaded_next_state = torch.reshape(preloaded_next_state, (preloaded_next_state.shape[0]*preloaded_next_state.shape[1], preloaded_next_state.shape[2], preloaded_next_state.shape[3], preloaded_next_state.shape[4]))
         
+        #print(preloaded_curr_state.shape)
+        
         for i in range(len(preloaded_curr_state)//BATCH_SIZE):
             
             current_state = preloaded_curr_state[i*BATCH_SIZE:(i+1)*BATCH_SIZE].to(DEVICE)
@@ -89,13 +91,14 @@ for e in range(TOTAL_EPOCHS):
 
             if ep % PLT_INTERVAL == 0:
                 print(f"LOSS: {predicted_loss.item()}")
-                ax1.scatter((e*len(preloaded_curr_state))+ep, predicted_loss.item(), color="blue")
+                ax1.scatter((e*len(preloaded_curr_state)*CACHE_BATCH_LENGTH)+ep, predicted_loss.item(), color="blue")
                 fig1.savefig((str(RESULTS_PATH) + '/sae_training/sae_loss.png'))
 
             epoch_loss += predicted_loss.item()
         
             if ep % SAVE_INTERVAL == 0:
-                torch.save(sae.state_dict(), (str(WEIGHTS_PATH) + f'/sae_training/sae_{e}_{ep}.pth'))
+            #if True:
+                #torch.save(sae.state_dict(), (str(WEIGHTS_PATH) + f'/sae_training/sae_{e}_{ep}.pth'))
 
                 with torch.no_grad():
                     ix = np.random.randint(0, len(MOVING_MNIST_DATASET_ENCODED["original"]))
@@ -115,16 +118,17 @@ for e in range(TOTAL_EPOCHS):
                     #print(c_s.shape)
                     current_state = torch.reshape(c_s, (1, c_s.shape[1] * c_s.shape[0], c_s.shape[2], c_s.shape[3])).to(DEVICE)
                     #print(current_state.shape)
-                    next_state = torch.reshape(n_s, (1, n_s.shape[1] * n_s.shape[0], n_s.shape[2], n_s.shape[3])).to(DEVICE)
+                    #next_state = torch.reshape(n_s, (1, n_s.shape[1] * n_s.shape[0], n_s.shape[2], n_s.shape[3])).to(DEVICE)
                 
                     n_out = sae(current_state)
-
+                    #n_out = next_state[0].unsqueeze(0)
 
                     if NUM_FRAMES > 1:
                         f = (n_out.shape[1]+1)//NUM_FRAMES
-                        n_out = n_out[0][n_out.shape[1]-f:n_out.shape[1]].unsqueeze(0)
+                        n_out = n_out[:,n_out.shape[1]-f:n_out.shape[1]]
 
                     n_out = dae.decoder(n_out).cpu().squeeze(0).squeeze(0).numpy()
+                    #n_out = dae.decoder(next_state[0].unsqueeze(0)).cpu().squeeze(0).squeeze(0).numpy()
 
                     c.imshow(n_out)
                     c.set_title("Predicted Next State")
@@ -132,6 +136,10 @@ for e in range(TOTAL_EPOCHS):
                     fig2.savefig((str(RESULTS_PATH) + f'/sae_training/sae_reconstruction_{e}_{ep}.png'))
                     plt.close(fig2)
 
-            ep += BATCH_SIZE
+                    #exit()
+            #diff = min((i+1)*BATCH_SIZE, len(preloaded_curr_state)) - (i*BATCH_SIZE)
+            #print(diff)
+            ep += min((i+1)*BATCH_SIZE, len(preloaded_curr_state)) - (i*BATCH_SIZE) 
+
 
     print(f"EPOCH LOSS: {epoch_loss}")

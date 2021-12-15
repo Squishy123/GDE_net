@@ -17,7 +17,7 @@ def main(argv):
     TOTAL_EPOCHS = 500
     PLT_INTERVAL = 50000
     SAVE_INTERVAL = 100000
-    NUM_FRAMES = 5
+    NUM_FRAMES = 1
     OUTPUT_FILE="mnist_preloaded_encoded.npz"
 
     try:
@@ -54,33 +54,18 @@ def main(argv):
         data = encoded_dataset[i*BATCH_SIZE:(i+1)*BATCH_SIZE]
 
         preloaded_curr_state=data[:,:-1]
+        #print(preloaded_curr_state.shape)
         preloaded_curr_state = preloaded_curr_state.unfold(1, NUM_FRAMES, 1)
+        #print(preloaded_curr_state.shape)
         preloaded_curr_state=torch.reshape(preloaded_curr_state, (preloaded_curr_state.shape[0], preloaded_curr_state.shape[1], NUM_FRAMES*64, 10, 10))
+        #print(preloaded_curr_state.shape)
 
         preloaded_next_state=data[:,1:]
         preloaded_next_state = preloaded_next_state.unfold(1, NUM_FRAMES, 1)
         preloaded_next_state=torch.reshape(preloaded_next_state, (preloaded_next_state.shape[0], preloaded_next_state.shape[1], NUM_FRAMES*64, 10, 10))
 
-        '''
-        if preloaded_curr_state_ALL == None:
-            preloaded_curr_state_ALL = preloaded_curr_state
-        else:
-            preloaded_curr_state_ALL = torch.cat((preloaded_curr_state_ALL, preloaded_curr_state), 0)
-
-        if preloaded_next_state_ALL == None:
-            preloaded_next_state_ALL = preloaded_next_state
-        else:
-            preloaded_next_state_ALL = torch.cat((preloaded_next_state_ALL, preloaded_next_state), 0)
-        '''
-        #del preloaded_next_state
-        #del preloaded_curr_state
-        #del data
-
-        #print(preloaded_curr_state_ALL.shape)
-
         # SAVING PRELOADED DATA
         np.savez(str(DATASETS_PATH) + "/" + f"CACHE_{i}_" + OUTPUT_FILE, curr_state=preloaded_curr_state, next_state=preloaded_next_state)
-
 
 if __name__ == "__main__":
     main(sys.argv[1:])
