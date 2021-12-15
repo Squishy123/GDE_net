@@ -17,7 +17,7 @@ NUM_FRAMES = 2
 
 # LOAD IN
 #print(WEIGHTS_PATH)
-dae.load_state_dict(torch.load((str(WEIGHTS_PATH) + f'/dae_training/dae_{17}_{0}.pth')))
+dae.load_state_dict(torch.load((str(WEIGHTS_PATH) + f'/dae_training/dae_{100}_{0}.pth')))
 dae.eval()
 
 with torch.no_grad():
@@ -41,37 +41,3 @@ with torch.no_grad():
                 original_dataset = torch.cat((original_dataset, torch.tensor(MOVING_MNIST_DATASET[i]).unsqueeze(0)), 0)
 
     np.savez(str(DATASETS_PATH) + '/mnist_encoded_seq.npz', encoded=encoded_dataset.numpy(), original=original_dataset.numpy())
-
-    # PRECACHE CURR AND NEXT STATES FOR SAE
-    preloaded_curr_state = None
-    preloaded_next_state = None
-
-    for i in range(len(encoded_dataset)):
-        if i % 1000 == 0:
-            print(f"{i}/{len(encoded_dataset)}")
-
-        g = 0 
-        ep_loss = 0
-        while g < encoded_dataset.shape[1]-2:
-                
-            #exit()
-
-            #state = torch.tensor(encoded_dataset["encoded"][(i*BATCH_SIZE):(i+1)*BATCH_SIZE]).to(DEVICE)
-            #state = torch.flatten(state, 2).unsqueeze(3)
-            current_state = torch.reshape(encoded_dataset[i][g:g+NUM_FRAMES], (1, encoded_dataset[i][g:g+NUM_FRAMES].shape[1] * encoded_dataset[i][g:g+NUM_FRAMES].shape[0], encoded_dataset[i][g:g+NUM_FRAMES].shape[2], encoded_dataset[i][g:g+NUM_FRAMES].shape[3]))
-            next_state = torch.reshape(encoded_dataset[i][g+1:g+NUM_FRAMES+1], (1, encoded_dataset[i][g+1:g+NUM_FRAMES+1].shape[1] * encoded_dataset[i][g+1:g+NUM_FRAMES+1].shape[0], encoded_dataset[i][g+1:g+NUM_FRAMES+1].shape[2], encoded_dataset[i][g+1:g+NUM_FRAMES+1].shape[3]))
-            
-            if preloaded_curr_state == None:
-                preloaded_curr_state = current_state.cpu()
-            else:
-                preloaded_curr_state = torch.cat((preloaded_curr_state.cpu(), current_state.cpu()), 0)
-
-            if preloaded_next_state == None:
-                preloaded_next_state = next_state.cpu()
-            else:
-                preloaded_next_state = torch.cat((preloaded_next_state.cpu(), next_state.cpu()), 0)
-
-            g += NUM_FRAMES
-
-    # SAVING PRELOADED DATA
-    np.savez(str(DATASETS_PATH) + "/mnist_preloaded_encoded.npz", curr_state=preloaded_curr_state, next_state=preloaded_next_state)

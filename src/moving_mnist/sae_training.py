@@ -10,15 +10,15 @@ import numpy as np
 
 # HYPER-PARAMETERS
 BATCH_SIZE = 100
-TOTAL_EPOCHS = 10
+TOTAL_EPOCHS = 3
 PLT_INTERVAL = 1000
 SAVE_INTERVAL = 1000
-NUM_FRAMES = 2
+NUM_FRAMES = 1
 
 dae = State_Autoencoder(1, 1).cuda().to(DEVICE)
 
 # LOAD IN
-dae.load_state_dict(torch.load((str(WEIGHTS_PATH) + f'/dae_training/dae_{17}_{0}.pth')))
+dae.load_state_dict(torch.load((str(WEIGHTS_PATH) + f'/dae_training/dae_{115}_{0}.pth')))
 dae.eval()
 
 #print(MOVING_MNIST_DATASET_ENCODED["encoded"].shape)
@@ -49,7 +49,7 @@ ax1.set_xlabel('Episodes')
 ax1.set_ylabel('Loss')
 
 # LOADING PRELOADED DATA
-data = np.load(str(DATASETS_PATH) + "/mnist_preloaded_encoded.npz")
+data = np.load(str(DATASETS_PATH) + "/mnist_preloaded_encoded_1.npz")
 preloaded_curr_state = torch.tensor(data["curr_state"])
 preloaded_next_state = torch.tensor(data["next_state"])
 
@@ -80,7 +80,7 @@ for e in range(TOTAL_EPOCHS):
 
         if ep % PLT_INTERVAL == 0:
             print(f"LOSS: {predicted_loss.item()}")
-            ax1.scatter((e*predicted_loss.item())+ep, predicted_loss.item(), color="blue")
+            ax1.scatter((e*len(preloaded_curr_state))+ep, predicted_loss.item(), color="blue")
             fig1.savefig((str(RESULTS_PATH) + '/sae_training/sae_loss.png'))
 
         epoch_loss += predicted_loss.item()
