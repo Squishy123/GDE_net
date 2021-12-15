@@ -10,10 +10,10 @@ import numpy as np
 
 # HYPER-PARAMETERS
 BATCH_SIZE = 100
-TOTAL_EPOCHS = 5
+TOTAL_EPOCHS = 500
 PLT_INTERVAL = 1000
 SAVE_INTERVAL = 1000
-NUM_FRAMES = 19
+NUM_FRAMES = 5
 
 dae = State_Autoencoder(1, 1).cuda().to(DEVICE)
 
@@ -49,9 +49,13 @@ ax1.set_xlabel('Episodes')
 ax1.set_ylabel('Loss')
 
 # LOADING PRELOADED DATA
-data = np.load(str(DATASETS_PATH) + "/mnist_preloaded_encoded_19.npz")
+data = np.load(str(DATASETS_PATH) + "/mnist_preloaded_encoded.npz")
 preloaded_curr_state = torch.tensor(data["curr_state"])
 preloaded_next_state = torch.tensor(data["next_state"])
+
+# reshape for batch
+preloaded_curr_state = torch.reshape(preloaded_curr_state, (preloaded_curr_state.shape[0]*preloaded_curr_state.shape[1], preloaded_curr_state.shape[2], preloaded_curr_state.shape[3], preloaded_curr_state.shape[4]))
+preloaded_next_state = torch.reshape(preloaded_next_state, (preloaded_next_state.shape[0]*preloaded_next_state.shape[1], preloaded_next_state.shape[2], preloaded_next_state.shape[3], preloaded_next_state.shape[4]))
 
 for e in range(TOTAL_EPOCHS):
     epoch_loss = 0

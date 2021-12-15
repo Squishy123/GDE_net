@@ -48,13 +48,13 @@ def main(argv):
         preloaded_curr_state = None
         preloaded_next_state = None
 
-        for i in range(100):
+        for i in range(len(encoded_dataset)):
             if i % 1000 == 0:
                 print(f"{i}/{len(encoded_dataset)}")
 
             g = 0 
             ep_loss = 0
-            while g + NUM_FRAMES < encoded_dataset.shape[1]-1:
+            while g + NUM_FRAMES <= encoded_dataset.shape[1]-1:
                 #exit()
 
                 #state = torch.tensor(encoded_dataset["encoded"][(i*BATCH_SIZE):(i+1)*BATCH_SIZE]).to(DEVICE)
